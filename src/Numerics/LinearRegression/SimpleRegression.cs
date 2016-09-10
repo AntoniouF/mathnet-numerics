@@ -91,5 +91,39 @@ namespace MathNet.Numerics.LinearRegression
             var xy = samples.UnpackSinglePass();
             return Fit(xy.Item1, xy.Item2);
         }
+
+        /// <summary>
+        /// Reports additional statistics for the linear regression y ~ a+b*x,
+        /// returning the standard error as (serror) tuple, where serror is the 
+        /// standard error.
+        /// </summary>
+        /// <param name="x">Predictor (independent)</param>
+        /// <param name="y">Response (dependent)</param>
+        /// <returns></returns>
+        public static Tuple<double> Statistics(double[] x, double[] y)
+        {
+            if (x.Length != y.Length)
+            {
+                throw new ArgumentException(String.Format(Resources.SampleVectorsSameLength, x.Length, y.Length));
+            }
+
+            if (x.Length <= 1)
+            {
+                throw new ArgumentException(string.Format(Resources.RegressionNotEnoughSamples, 2, x.Length));
+            }
+
+            var coeffs = Fit(x, y);
+            double yhat;
+            double serror;
+            double rss = 0.0;
+            for (int idx = 0; idx < x.Length; ++idx)
+            {
+                yhat = coeffs.Item2 * x[idx] + coeffs.Item1;
+                rss += (y[idx] - yhat) * (y[idx] - yhat);
+            }
+            rss /= x.Length;
+            serror = Math.Sqrt(rss);
+            return new Tuple<double>(serror);
+        }
     }
 }
