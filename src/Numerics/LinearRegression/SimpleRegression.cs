@@ -94,13 +94,13 @@ namespace MathNet.Numerics.LinearRegression
 
         /// <summary>
         /// Reports additional statistics for the linear regression y ~ a+b*x,
-        /// returning the standard error as (serror) tuple, where serror is the 
-        /// standard error.
+        /// returning the statistics as a (serror, rsq) tuple, where serror is the 
+        /// standard error and rsq is the R squared of the regression.
         /// </summary>
         /// <param name="x">Predictor (independent)</param>
         /// <param name="y">Response (dependent)</param>
         /// <returns></returns>
-        public static Tuple<double> Statistics(double[] x, double[] y)
+        public static Tuple<double, double> Statistics(double[] x, double[] y)
         {
             if (x.Length != y.Length)
             {
@@ -113,17 +113,28 @@ namespace MathNet.Numerics.LinearRegression
             }
 
             var coeffs = Fit(x, y);
+            double my = 0.0;
+
+            // Calculate the mean of the responses
+            for (int idx = 0; idx < y.Length; ++idx)
+                my += y[idx];
+            my /= y.Length;
+
             double yhat;
             double serror;
             double rss = 0.0;
+            double tss = 0.0;
+            double rsq = 0.0;
+
             for (int idx = 0; idx < x.Length; ++idx)
             {
                 yhat = coeffs.Item2 * x[idx] + coeffs.Item1;
                 rss += (y[idx] - yhat) * (y[idx] - yhat);
+                tss += (y[idx] - my) * (y[idx] - my);
             }
-            rss /= x.Length;
-            serror = Math.Sqrt(rss);
-            return new Tuple<double>(serror);
+            serror = Math.Sqrt(rss / x.Length);
+            rsq = 1 - rss / tss;
+            return new Tuple<double, double>(serror, rsq);
         }
     }
 }
