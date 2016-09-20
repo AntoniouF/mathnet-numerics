@@ -72,12 +72,12 @@ namespace MathNet.Numerics.LinearRegression
             for (int i = 0; i < x.Length; i++)
             {
                 double diff = x[i] - mx;
-                covariance += diff*(y[i] - my);
-                variance += diff*diff;
+                covariance += diff * (y[i] - my);
+                variance += diff * diff;
             }
 
-            var b = covariance/variance;
-            return new Tuple<double, double>(my - b*mx, b);
+            var b = covariance / variance;
+            return new Tuple<double, double>(my - b * mx, b);
         }
 
         /// <summary>
@@ -109,32 +109,44 @@ namespace MathNet.Numerics.LinearRegression
 
             if (x.Length <= 1)
             {
-                throw new ArgumentException(string.Format(Resources.RegressionNotEnoughSamples, 2, x.Length));
+                throw new ArgumentException(String.Format(Resources.RegressionNotEnoughSamples, 2, x.Length));
             }
 
             var coeffs = Fit(x, y);
+            double mx = 0.0;
             double my = 0.0;
-
-            // Calculate the mean of the responses
-            for (int idx = 0; idx < y.Length; ++idx)
-                my += y[idx];
-            my /= y.Length;
-
+            double sx = 0.0;
+            double sy = 0.0;
+            double xSqr = 0.0;
             double yhat;
-            double serror;
+            double sAlpha;
+            double sBeta;
             double rss = 0.0;
             double tss = 0.0;
             double rsq = 0.0;
 
+            // Two pass algorithm to calculate means and variances
+            for (int idx = 0; idx < y.Length; ++idx)
+            {
+                sx += x[idx];
+                sy += y[idx];
+                xSqr += x[idx] * x[idx];
+            }
+            mx = sx / x.Length;
+            my = sy / y.Length;
+            
             for (int idx = 0; idx < x.Length; ++idx)
             {
                 yhat = coeffs.Item2 * x[idx] + coeffs.Item1;
                 rss += (y[idx] - yhat) * (y[idx] - yhat);
-                tss += (y[idx] - my) * (y[idx] - my);
+                tss += (y[idx] - sy) * (y[idx] - sy);
             }
-            serror = Math.Sqrt(rss / x.Length);
+
+            double denominator = x.Length * xSqr - sx * sx;
+            sAlpha = Math.Sqrt(rss * xSqr / denominator);
+            sBeta = Math.Sqrt(rss * x.Length / denominator);
             rsq = 1 - rss / tss;
-            return new Tuple<double, double>(serror, rsq);
+            return new Tuple<double, double>(sAlpha, sBeta);
         }
     }
 }
