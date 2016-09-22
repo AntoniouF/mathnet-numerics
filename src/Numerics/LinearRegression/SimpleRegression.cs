@@ -100,7 +100,7 @@ namespace MathNet.Numerics.LinearRegression
         /// <param name="x">Predictor (independent)</param>
         /// <param name="y">Response (dependent)</param>
         /// <returns></returns>
-        public static Tuple<double, double> Statistics(double[] x, double[] y)
+        public static Tuple<double, double, double, double, double> Statistics(double[] x, double[] y)
         {
             if (x.Length != y.Length)
             {
@@ -117,7 +117,9 @@ namespace MathNet.Numerics.LinearRegression
             double my = 0.0;
             double sx = 0.0;
             double sy = 0.0;
-            double xSqr = 0.0;
+            double sxx = 0.0;
+            double syy = 0.0;
+            double sxy = 0.0;
             double yhat;
             double sAlpha;
             double sBeta;
@@ -125,12 +127,13 @@ namespace MathNet.Numerics.LinearRegression
             double tss = 0.0;
             double rsq = 0.0;
 
-            // Two pass algorithm to calculate means and variances
             for (int idx = 0; idx < y.Length; ++idx)
             {
                 sx += x[idx];
                 sy += y[idx];
-                xSqr += x[idx] * x[idx];
+                sxx += x[idx] * x[idx];
+                syy += y[idx] * y[idx];
+                sxy += x[idx] + y[idx];
             }
             mx = sx / x.Length;
             my = sy / y.Length;
@@ -139,14 +142,14 @@ namespace MathNet.Numerics.LinearRegression
             {
                 yhat = coeffs.Item2 * x[idx] + coeffs.Item1;
                 rss += (y[idx] - yhat) * (y[idx] - yhat);
-                tss += (y[idx] - sy) * (y[idx] - sy);
+                tss += (y[idx] - my) * (y[idx] - my);
             }
 
-            double denominator = x.Length * xSqr - sx * sx;
-            sAlpha = Math.Sqrt(rss * xSqr / denominator);
+            double denominator = x.Length * sxx - sx * sx;
+            sAlpha = Math.Sqrt(rss * sxx / denominator);
             sBeta = Math.Sqrt(rss * x.Length / denominator);
             rsq = 1 - rss / tss;
-            return new Tuple<double, double>(sAlpha, sBeta);
+            return new Tuple<double, double, double, double, double>(sAlpha, sBeta, rss, tss - rss, rsq);
         }
     }
 }
